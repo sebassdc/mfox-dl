@@ -58,7 +58,7 @@ const dlPage = (url, page, filename, chapterName) => {
       .on('end', () => {
         observer.complete()
       })
-      .pipe(fs.createWriteStream(`${__dirname}/${chapterName}/${filename}`))
+      .pipe(fs.createWriteStream(`${chapterName}/${filename}`))
   })
 }
 
