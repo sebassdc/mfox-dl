@@ -3,10 +3,13 @@ const { log } = console
 const { inspect } = require('util')
 const logSymbols = require('log-symbols')
 const program = require('commander')
-const { downloadChapter } = require('../')
 const mangaFox = require('node-mangafox')
 const chalk = require('chalk')
 const gradient = require('gradient-string')
+const {
+  downloadChapter,
+  multiDownload
+} = require('../')
 
 
 const range = (val) => val.split('..').map(Number)
