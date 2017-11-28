@@ -8,7 +8,8 @@ const chalk = require('chalk')
 const gradient = require('gradient-string')
 const {
   downloadChapter,
-  multiDownload
+  multiDownload,
+  downloadPage,
 } = require('../')
 
 
@@ -26,22 +27,21 @@ program
 // program
 //   .command('info <id>')
 
-// 'Get the number of chapters of the manga'
 program
   .command('chapters <manga>')
   .description('Get the number of chapters of the manga')
   .action(manga => {
-    mangaFox.getChapters("gantz", num => {
-      log(`${chalk.white.bold(manga)} have ${chalk.white.bold(num)} chapters`)
+    mangaFox.getChapters(manga, num => {
+      log(`${chalk.white.bold(manga)} have ${chalk.yellow.bold(num)} chapters`)
     })
   })
 
 
 program
-  .command('down <manga> [chapter]')
+  .command('down <manga> [chapter] [page]')
   .description('Download a manga chapter or a range of chapters')
   .option('-r, --range <a>..<b>', 'Download from chapter <a> to chapter <b>', range)
-  .action((manga, chapter, opt) => {
+  .action((manga, chapter, page, opt) => {
 
     if (opt.range) {
       multiDownload({
@@ -49,7 +49,8 @@ program
         from: opt.range[0],
         to: opt.range[1],
       })
-      return;
+    } else if(page) {
+      downloadPage(manga, chapter, page)
     } else if(chapter) {
       downloadChapter(manga, chapter)
         .run()
@@ -60,7 +61,6 @@ program
       log(` ${logSymbols.info} TODO: Download all feature`)
     }
   })
-
 
 
 program

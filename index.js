@@ -8,6 +8,10 @@ const Listr = require('listr')
 const mangaFox = require('node-mangafox')
 const prettyBytes = require('pretty-bytes')
 const logSymbols = require('log-symbols')
+const gradient = require('gradient-string')
+
+const dinfo = chalk.green.italic.bold
+const white = chalk.white
 const {
   progressiveBar,
   getPageUrl,
@@ -31,20 +35,11 @@ const dlPage = (url, page, filename, chapterName) => {
         headers,
         maxAttempts: 15,
         retryDelay: 5000,
-      }, (error, res, body) => {
-        if (error) {
-          if (res) observer.next(`Retry ${res.attempts}...`)
-          if (res.attempts >= 15) {
-            throw new Error("Maximun number of attempts on")
-          }
-        }
       })
     )
       .on('response', res => {
         if (res.statusCode === 200) {
           observer.next("Starting...")
-        } else {
-          throw new Error("Status code" + res.statusCode)
         }
         //  "[:bar] :percent :etas | :current of :total bytes"
       })
@@ -59,6 +54,9 @@ const dlPage = (url, page, filename, chapterName) => {
         observer.complete()
       })
       .pipe(fs.createWriteStream(`${chapterName}/${filename}`))
+      .on('error', err => {
+        throw new Error(`Pipe Error: ${err}`)
+      })
   })
 }
 
@@ -74,7 +72,7 @@ const downloadChapter = (manga, ch) => {
 
   const listrTask = new Listr([
     {
-      title: chalk.whiteBright(`Get imgUrls of ${chalk.blue.bold(manga)} chapter ${chalk.blue.bold(ch)}`),
+      title: chalk.whiteBright(`Get imgUrls of ${dinfo(manga)} chapter ${dinfo(ch)}`),
       task: () => new Promise((resolve, reject) => {
         mangaFox.getImages(manga, ch, (urls) => {
           images = urls
@@ -83,9 +81,9 @@ const downloadChapter = (manga, ch) => {
       })
     },
     {
-      title: chalk.whiteBright.bold("Download images"),
+      title: chalk.whiteBright("Download images"),
       task: () => new Listr(images.map((url, page) => ({
-        title: chalk.whiteBright.bold(getFilename(page + 1)),
+        title: chalk.whiteBright(getFilename(page + 1)),
         task: () => dlPage(url, page + 1, getFilename(page + 1), chapterName),
       })), {concurrent: true, exitOnError: false})
     }
@@ -95,24 +93,29 @@ const downloadChapter = (manga, ch) => {
 
 const multiDownload = ({manga, from, to}) => {
   let tasks = Array(to + 1 - from).fill(0).map((_, i) => ({
-    title: chalk.yellow.bold(`Downloading ${manga} ${from + i}`),
+    title: chalk.cyan(`Downloading ${dinfo(manga)} chapter ${dinfo(from + i)}`),
     task: () => downloadChapter(manga, from + i),
   }))
   const listr = new Listr(tasks, {exitOnError: false})
-  listr.run().then(()=> log("Done!"))
+  listr.run().then(()=> log(gradient.rainbow("---Downloaded!---")))
 }
 
 const downloadPage = (manga, ch, page) => {
   const chapterName = `${manga}-${ch.toString().padStart(3, "0")}`
-  log("Getting info");
-  getPageUrl(manga, ch, page)
-    .then(url => {
-      dlPage(url, page, getFilename(page), chapterName).subscribe(
-        data => log(data),
-        error => log(error),
-        () => log("Done!")
-      )
-    })
+  let url
+  const tasks = new Listr([
+    {
+      title: white('Get img url'),
+      task: () => getPageUrl(manga, ch, page).then(uri => {
+        url = uri
+      })
+    },
+    {
+      title: white(`Downloading ${dinfo(manga)} chapter ${dinfo(ch)} page ${dinfo(page)}`),
+      task: () => dlPage(url, page, getFilename(page), chapterName)
+    }
+  ])
+  tasks.run().then(_ => log(gradient.rainbow("---Downloaded!---")))
 }
 
 module.exports = {
