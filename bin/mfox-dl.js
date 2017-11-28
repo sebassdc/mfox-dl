@@ -29,7 +29,7 @@ program
   .description('Get the number of chapters of the manga')
   .action(manga => {
     mangaFox.getChapters("gantz", num => {
-      log(`${chalk.white.bold(Manga)} have ${chalk.white.bold(num)} chapters`)
+      log(`${chalk.white.bold(manga)} have ${chalk.white.bold(num)} chapters`)
     })
   })
 
