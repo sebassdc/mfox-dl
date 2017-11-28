@@ -1,13 +1,9 @@
 // @ts-check
 const Rx = require('@reactivex/rxjs')
-
 const fs = require('fs')
-// const request = require('request')
 const request = require('requestretry')
 const progress = require('request-progress')
-const {inspect} = require('util')
 const chalk = require('chalk')
-const log = console.log
 const Listr = require('listr')
 const mangaFox = require('node-mangafox')
 const prettyBytes = require('pretty-bytes')
@@ -18,9 +14,8 @@ const {
   getFilename,
   searchManga
 } = require('./utils')
-// const Multiprogress = require("multi-progress")
-// const puppeteer = require('puppeteer')
-// const multi = new Multiprogress(process.stderr)
+
+const log = console.log
 
 process.title = "mangafox-dl"
 
@@ -37,11 +32,11 @@ const dlPage = (url, page, filename, chapterName) => {
         maxAttempts: 15,
         retryDelay: 5000,
       }, (error, res, body) => {
-        if (res) {
-          observer.next(`Retry ${res.attempts}...`)
-        }
         if (error) {
-          throw new Error(error)
+          if (res) observer.next(`Retry ${res.attempts}...`)
+          if (res.attempts >= 15) {
+            throw new Error("Maximun number of attempts on")
+          }
         }
       })
     )
@@ -79,7 +74,7 @@ const downloadChapter = (manga, ch) => {
 
   const listrTask = new Listr([
     {
-      title: chalk.blue.bold(`Getting imgUrls of ${manga} chapter ${ch}`),
+      title: chalk.whiteBright(`Get imgUrls of ${chalk.blue.bold(manga)} chapter ${chalk.blue.bold(ch)}`),
       task: () => new Promise((resolve, reject) => {
         mangaFox.getImages(manga, ch, (urls) => {
           images = urls
@@ -88,29 +83,23 @@ const downloadChapter = (manga, ch) => {
       })
     },
     {
-      title: chalk.blue.bold("Downloading manga"),
+      title: chalk.whiteBright.bold("Download images"),
       task: () => new Listr(images.map((url, page) => ({
-        title: chalk.white.bold(getFilename(page + 1)),
+        title: chalk.whiteBright.bold(getFilename(page + 1)),
         task: () => dlPage(url, page + 1, getFilename(page + 1), chapterName),
-      })), {concurrent: true})
+      })), {concurrent: true, exitOnError: false})
     }
   ])
   return listrTask
 }
 
 const multiDownload = ({manga, from, to}) => {
-  downloadChapter(manga, from)
-    .run()
-    .then(() => {
-      if (from < to) {
-        multiDownload({
-          from: from + 1,
-          manga,
-          to,
-        })
-      }
-    })
-    .catch(err => log(logSymbols.error, err))
+  let tasks = Array(to + 1 - from).fill(0).map((_, i) => ({
+    title: chalk.yellow.bold(`Downloading ${manga} ${from + i}`),
+    task: () => downloadChapter(manga, from + i),
+  }))
+  const listr = new Listr(tasks, {exitOnError: false})
+  listr.run().then(()=> log("Done!"))
 }
 
 const downloadPage = (manga, ch, page) => {
@@ -126,17 +115,16 @@ const downloadPage = (manga, ch, page) => {
     })
 }
 
-// downloadChapter("sun_ken_rock", 61)
-//   .run()
+module.exports = {
+  dlPage,
+  downloadChapter,
+  downloadPage,
+  multiDownload
+}
 
-// multiDownload({
-//   manga: "gantz",
-//   from: 129,
-//   to: 200
-// })
 
-downloadPage("gantz", 173, 9)
+// downloadPage("gantz", 174, 1)
 
 // mangaFox.getDetails(35, data => log(data))
 // searchManga("gan")
-// gantz , 35
+// gantz , id:35
