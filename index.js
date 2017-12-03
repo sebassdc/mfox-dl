@@ -16,7 +16,8 @@ const {
   progressiveBar,
   getPageUrl,
   getFilename,
-  searchManga
+  searchManga,
+  zipFolder
 } = require('./utils')
 
 const log = console.log
@@ -86,7 +87,14 @@ const downloadChapter = (manga, ch) => {
         title: chalk.whiteBright(getFilename(page + 1)),
         task: () => dlPage(url, page + 1, getFilename(page + 1), chapterName),
       })), {concurrent: true, exitOnError: false})
-    }
+    },
+    {
+      title: chalk.whiteBright("Zipping chapter"),
+      task: () => {
+        zipFolder(chapterName)
+          .catch(err => log(`${logSymbols} ${err}`))
+      },
+    },
   ])
   return listrTask
 }

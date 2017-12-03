@@ -6,6 +6,8 @@ const program = require('commander')
 const mangaFox = require('node-mangafox')
 const chalk = require('chalk')
 const gradient = require('gradient-string')
+const fs = require('fs')
+const { zipFolder } = require('../utils')
 const {
   downloadChapter,
   multiDownload,
@@ -36,6 +38,29 @@ program
     })
   })
 
+program
+  .command('zip [folder]')
+  .description('Turn the folder on a cbz file')
+  .option('-A, --all', 'Zip all the folders on the working directory')
+  .action((folder, opt)=> {
+    if (folder) {
+      zipFolder(folder)
+        .then(() => log(`${logSymbols.success} Zipped ${gradient.rainbow(folder)}`))
+        .catch(err => log(`${logSymbols} ${err}`))
+    } else if (opt) {
+      if (opt.all) {
+        fs.readdir('./', (err, files) => {
+          files
+            .filter(e => fs.lstatSync(e).isDirectory)
+            .forEach(folder => {
+              zipFolder(folder)
+                .then(() => log(`${logSymbols.success} Zipped ${gradient.rainbow(folder)}`))
+                .catch(err => log(`${logSymbols} ${err}`))
+            })
+        })
+      }
+    }
+  })
 
 program
   .command('down <manga> [chapter] [page]')

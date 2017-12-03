@@ -1,7 +1,12 @@
 // @ts-check
 const request = require('request');
+const fs = require('fs');
+const path = require('path')
 const mangaFox = require('node-mangafox');
 const $ = require('node-mangafox/jquack')
+const yazl = require("yazl");
+const del = require('del')
+const log = console.log
 
 const searchManga = str => {
   const query = str.replace("'", "").replace(" ", "+");
@@ -71,10 +76,31 @@ const getPageUrl = (manga, ch, page) => new Promise((resolve, reject) => {
 
 const getFilename = n => `${n.toString().padStart(4, "0")}.jpg`
 
+const zipFolder = p =>  new Promise((resolve, reject) => {
+  if (!fs.existsSync(p)) {
+    throw Error("Zipping error: The path doesn't exist")
+  }
+  fs.readdir(p, (err, files) => {
+    if (err) {
+      reject(err)
+    }
+    let zipfile = new yazl.ZipFile();
+    zipfile.outputStream.pipe(fs.createWriteStream(`${p}.cbz`)).on("close", () => {
+      del.sync(p)
+      resolve()
+    });
+    files.map(e => path.join(p, e)).forEach(img => {
+      zipfile.addFile(img, img);
+    })
+    zipfile.end()
+  })
+})
+
 module.exports = {
   progressBar,
   progressiveBar,
   searchManga,
   getPageUrl,
   getFilename,
+  zipFolder,
 }
