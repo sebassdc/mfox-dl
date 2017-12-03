@@ -1,6 +1,6 @@
 {
   "name": "mfox",
-  "version": "0.2.5",
+  "version": "0.2.0",
   "description": "A cli utility for download manga from mangafox",
   "main": "index.js",
   "scripts": {
