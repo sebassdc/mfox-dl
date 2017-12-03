@@ -11,7 +11,7 @@ const logSymbols = require('log-symbols')
 const gradient = require('gradient-string')
 
 const dinfo = chalk.green.italic.bold
-const white = chalk.white
+const { white } = chalk
 const {
   progressiveBar,
   getPageUrl,
@@ -47,7 +47,7 @@ const dlPage = (url, page, filename, chapterName) => {
         observer.next(`${progressiveBar({title: "Downloading", value: percent})} ${prettyBytes(size.transferred)}/${prettyBytes(size.total)}`)
       })
       .on('error', err => {
-        log(logSymbols, err)
+        log(logSymbols.error, err)
         observer.complete()
       })
       .on('end', () => {
