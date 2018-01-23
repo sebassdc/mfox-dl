@@ -15,9 +15,12 @@ const { white } = chalk
 const {
   progressiveBar,
   getPageUrl,
+  getImages,
   getFilename,
   searchManga,
-  zipFolder
+  zipFolder,
+  getAllChapters,
+  pad
 } = require('./utils')
 
 const log = console.log
@@ -61,7 +64,7 @@ const dlPage = (url, page, filename, chapterName) => {
   })
 }
 
-const downloadChapter = (manga, ch) => {
+const downloadChapter = (manga, ch, url = null) => {
   // Array to store urls
   let images = []
 
@@ -75,7 +78,10 @@ const downloadChapter = (manga, ch) => {
     {
       title: chalk.whiteBright(`Get imgUrls of ${dinfo(manga)} chapter ${dinfo(ch)}`),
       task: () => new Promise((resolve, reject) => {
-        mangaFox.getImages(manga, ch, (urls) => {
+        getImages({
+          manga,
+          chapter: ch,
+        }).then( urls => {
           images = urls
           resolve()
         })
@@ -86,7 +92,7 @@ const downloadChapter = (manga, ch) => {
       task: () => new Listr(images.map((url, page) => ({
         title: chalk.whiteBright(getFilename(page + 1)),
         task: () => dlPage(url, page + 1, getFilename(page + 1), chapterName),
-      })), {concurrent: true, exitOnError: false})
+      })), {concurrent: true, exitOnError: true})
     },
     {
       title: chalk.whiteBright("Zipping chapter"),
@@ -99,17 +105,20 @@ const downloadChapter = (manga, ch) => {
   return listrTask
 }
 
-const multiDownload = ({manga, from, to}) => {
-  let tasks = Array(to + 1 - from).fill(0).map((_, i) => ({
-    title: chalk.cyan(`Downloading ${dinfo(manga)} chapter ${dinfo(from + i)}`),
-    task: () => downloadChapter(manga, from + i),
-  }))
-  const listr = new Listr(tasks, {exitOnError: false})
-  listr.run().then(()=> log(gradient.rainbow("---Downloaded!---")))
+const multiDownload = ({manga, from, to, links = null}) => {
+  downloadChapter(manga, from, links ? links.shift() : null)
+    .run().then(() => {
+      if (from < to) {
+        multiDownload({manga, from: from + 1, to, links})
+      }
+      else {
+        return
+      }
+    }).then(()=> log(gradient.rainbow("---Downloaded!---")))
 }
 
 const downloadPage = (manga, ch, page) => {
-  const chapterName = `${manga}-${ch.toString().padStart(3, "0")}`
+  const chapterName = `${manga}-${pad(ch)}`
   let url
   const tasks = new Listr([
     {
@@ -126,11 +135,18 @@ const downloadPage = (manga, ch, page) => {
   tasks.run().then(_ => log(gradient.rainbow("---Downloaded!---")))
 }
 
+const downloadAll = ({manga}) => {
+  mangaFox.getChapters(manga, n => {
+    multiDownload({manga, from: 1, to: Number(n)})
+  })
+}
+
 module.exports = {
   dlPage,
   downloadChapter,
   downloadPage,
-  multiDownload
+  multiDownload,
+  downloadAll,
 }
 
 

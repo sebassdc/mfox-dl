@@ -12,6 +12,7 @@ const {
   downloadChapter,
   multiDownload,
   downloadPage,
+  downloadAll,
 } = require('../')
 
 
@@ -83,7 +84,7 @@ program
           log(gradient.rainbow("---Downloaded!---"))
         })
     } else {
-      log(` ${logSymbols.info} TODO: Download all feature`)
+      downloadAll({manga})
     }
   })
 
