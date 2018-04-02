@@ -64,7 +64,7 @@ const dlPage = (url, page, filename, chapterName) => {
   })
 }
 
-const downloadChapter = (manga, ch, url = null) => {
+const downloadChapter = (manga, ch, volume, url = null) => {
   // Array to store urls
   let images = []
 
@@ -81,6 +81,7 @@ const downloadChapter = (manga, ch, url = null) => {
         getImages({
           manga,
           chapter: ch,
+          volume
         }).then( urls => {
           images = urls
           resolve()
@@ -105,11 +106,11 @@ const downloadChapter = (manga, ch, url = null) => {
   return listrTask
 }
 
-const multiDownload = ({manga, from, to, links = null}) => {
-  downloadChapter(manga, from, links ? links.shift() : null)
+const multiDownload = ({manga, from, volume, to, links = null}) => {
+  downloadChapter(manga, from, volume, links ? links.shift() : null)
     .run().then(() => {
       if (from < to) {
-        multiDownload({manga, from: from + 1, to, links})
+        multiDownload({manga, from: from + 1, to, links, volume})
       }
       else {
         return

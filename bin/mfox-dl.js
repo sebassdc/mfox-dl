@@ -67,6 +67,7 @@ program
   .command('down <manga> [chapter] [page]')
   .description('Download a manga chapter or a range of chapters')
   .option('-r, --range <a>..<b>', 'Download from chapter <a> to chapter <b>', range)
+  .option('-v, --volume <a>', 'Specify Volume <a>')
   .action((manga, chapter, page, opt) => {
 
     if (opt.range) {
@@ -74,11 +75,12 @@ program
         manga,
         from: opt.range[0],
         to: opt.range[1],
+        volume: opt.volume,
       })
     } else if(page) {
       downloadPage(manga, chapter, page)
     } else if(chapter) {
-      downloadChapter(manga, chapter)
+      downloadChapter(manga, chapter, opt.volume)
         .run()
         .then(() => {
           log(gradient.rainbow("---Downloaded!---"))

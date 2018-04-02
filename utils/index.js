@@ -59,13 +59,18 @@ const getAllChapters = ({manga}) =>
 
 const range = n => Array.from(Array(n),(_,i)=>i)
 const pad = n => {
-  const pad = parseInt(n) === n ? 3 : 5
-  return n.toString().padStart(pad, "0")
+  const pad = parseInt(n) === Number(n) ? 3 : 5
+  // console.log("pad", pad)
+  const result = n.toString().padStart(pad, "0")
+  // console.log("res", result)
+  return result
 }
 
-const getImages = ({manga, chapter, retry = 10}) => new Promise((resolve, reject) => {
-  const reqLink = `http://m.mangafox.la/roll_manga/${manga}/v02/c${pad(chapter)}/1.html`
-  // log("reqLink", reqLink)
+const getImages = ({manga, chapter, volume, retry = 10}) => new Promise((resolve, reject) => {
+  const reqLink = volume ?
+    `http://m.fanfox.net/roll_manga/${manga}/v${volume.toString().padStart(2, "0")}/c${pad(chapter)}/1.html` :
+    `http://m.fanfox.net/roll_manga/${manga}/c${pad(chapter)}/1.html`
+  log("reqLink", reqLink)
   docCreator(reqLink)
     .then(doc => {
       const links = Array.from(doc.getElementsByClassName('reader-page'))
@@ -77,7 +82,7 @@ const getImages = ({manga, chapter, retry = 10}) => new Promise((resolve, reject
 
 // getImages({
 //   manga: "blame",
-//   chapter: 8.1,
+//   chapter: 10,
 // })
 
 
