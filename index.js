@@ -9,6 +9,7 @@ const mangaFox = require('node-mangafox')
 const prettyBytes = require('pretty-bytes')
 const logSymbols = require('log-symbols')
 const gradient = require('gradient-string')
+const webp = require('webp-converter')
 
 const dinfo = chalk.green.italic.bold
 const { white } = chalk
@@ -64,6 +65,20 @@ const dlPage = (url, page, filename, chapterName) => {
   })
 }
 
+const compress = (input, ouput) => new Promise((resolve, reject) => {
+  webp.cwebp(input, ouput, '-quiet -q 5', status => {
+    if (status === '101') reject(status)
+    else resolve(status)
+  })
+})
+
+const remove = filename => new Promise((resolve, reject) => {
+  fs.unlink(filename, (err) => {
+    if (err) reject(err)
+    resolve()
+  })
+})
+
 const downloadChapter = (manga, ch, volume, url = null) => {
   // Array to store urls
   let images = []
@@ -93,9 +108,25 @@ const downloadChapter = (manga, ch, volume, url = null) => {
       task: () => new Listr(images.map((url, page) => ({
         title: chalk.whiteBright(getFilename(page + 1)),
         task: () => dlPage(url, page + 1, getFilename(page + 1), chapterName),
-      })), {concurrent: true, exitOnError: true})
-    },
-    {
+      })), {concurrent: false, exitOnError: true})
+    },{
+      title: chalk.whiteBright("Compress to webp"),
+      task: () => new Listr(images.map((_, page) => ({
+        title: `compressing ${(page + 1).toString().padStart(4, '0')}.jpg`,
+        task: () => compress(
+          `${chapterName}/${(page + 1).toString().padStart(4, '0')}.jpg`,
+          `${chapterName}/${(page + 1).toString().padStart(4, '0')}.webp`,
+        )
+      })), {concurrent: false, exitOnError: true})
+    },{
+      title: chalk.whiteBright("Remove jpg"),
+      task: () => new Listr(images.map((_, page) => ({
+        title: `removing ${(page + 1).toString().padStart(4, '0')}.jpg`,
+        task: () => remove(
+          `${chapterName}/${(page + 1).toString().padStart(4, '0')}.jpg`,
+        )
+      })), {concurrent: false, exitOnError: true})
+    },{
       title: chalk.whiteBright("Zipping chapter"),
       task: () => {
         zipFolder(chapterName)
