@@ -49,7 +49,7 @@ const dlPage = (url, page, filename, chapterName) => {
         //  "[:bar] :percent :etas | :current of :total bytes"
       })
       .on('progress', ({percent, size}) => {
-        observer.next(`${progressiveBar({title: "Downloading", value: percent})} ${prettyBytes(size.transferred)}/${prettyBytes(size.total)}`)
+        observer.next(`${progressiveBar({title: "Downloading", value: percent})} ${prettyBytes(size.transferred||0)}/${prettyBytes(size.total||0)}`)
       })
       .on('error', err => {
         log(logSymbols.error, err)
@@ -66,7 +66,7 @@ const dlPage = (url, page, filename, chapterName) => {
 }
 
 const compress = (input, ouput) => new Promise((resolve, reject) => {
-  webp.cwebp(input, ouput, '-quiet -q 5', status => {
+  webp.cwebp(input, ouput, '-quiet -q 50', status => {
     if (status === '101') reject(status)
     else resolve(status)
   })
@@ -108,24 +108,24 @@ const downloadChapter = (manga, ch, volume, url = null) => {
       task: () => new Listr(images.map((url, page) => ({
         title: chalk.whiteBright(getFilename(page + 1)),
         task: () => dlPage(url, page + 1, getFilename(page + 1), chapterName),
-      })), {concurrent: false, exitOnError: true})
-    },{
-      title: chalk.whiteBright("Compress to webp"),
-      task: () => new Listr(images.map((_, page) => ({
-        title: `compressing ${(page + 1).toString().padStart(4, '0')}.jpg`,
-        task: () => compress(
-          `${chapterName}/${(page + 1).toString().padStart(4, '0')}.jpg`,
-          `${chapterName}/${(page + 1).toString().padStart(4, '0')}.webp`,
-        )
-      })), {concurrent: false, exitOnError: true})
-    },{
-      title: chalk.whiteBright("Remove jpg"),
-      task: () => new Listr(images.map((_, page) => ({
-        title: `removing ${(page + 1).toString().padStart(4, '0')}.jpg`,
-        task: () => remove(
-          `${chapterName}/${(page + 1).toString().padStart(4, '0')}.jpg`,
-        )
-      })), {concurrent: false, exitOnError: true})
+      })), {concurrent: true, exitOnError: true})
+    // },{
+    //   title: chalk.whiteBright("Compress to webp"),
+    //   task: () => new Listr(images.map((_, page) => ({
+    //     title: `compressing ${(page + 1).toString().padStart(4, '0')}.jpg`,
+    //     task: () => compress(
+    //       `${chapterName}/${(page + 1).toString().padStart(4, '0')}.jpg`,
+    //       `${chapterName}/${(page + 1).toString().padStart(4, '0')}.webp`,
+    //     )
+    //   })), {concurrent: false, exitOnError: true})
+    // },{
+    //   title: chalk.whiteBright("Remove jpg"),
+    //   task: () => new Listr(images.map((_, page) => ({
+    //     title: `removing ${(page + 1).toString().padStart(4, '0')}.jpg`,
+    //     task: () => remove(
+    //       `${chapterName}/${(page + 1).toString().padStart(4, '0')}.jpg`,
+    //     )
+    //   })), {concurrent: false, exitOnError: true})
     },{
       title: chalk.whiteBright("Zipping chapter"),
       task: () => {
