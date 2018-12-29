@@ -78,7 +78,7 @@ program
         volume: opt.volume,
       })
     } else if(page) {
-      downloadPage(manga, chapter, page)
+      downloadPage(opt.volume, manga, chapter, page)
     } else if(chapter) {
       downloadChapter(manga, chapter, opt.volume)
         .run()

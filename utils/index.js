@@ -39,12 +39,6 @@ const searchManga = str => {
   })
 }
 
-const getPageUrl = (manga, ch, page) => new Promise((resolve, reject) => {
-  const url_to_parse = `http://mangafox.me/manga/${mangaFox.fixTitle(manga)}/v01/c${mangaFox.pad(ch,3)}/${page}.html`;
-  $.get(url_to_parse, d => {
-    resolve(d.find('#viewer img').attr('src'))
-  }, true)
-})
 
 const getFilename = n => `${n.toString().padStart(4, "0")}.jpg`
 
@@ -76,6 +70,14 @@ const getImages = ({manga, chapter, volume, retry = 10}) => new Promise((resolve
       const links = Array.from(doc.getElementsByClassName('reader-page'))
         .map(e => e.dataset.original)
       resolve(links)
+    })
+    .catch(err => reject(err))
+})
+
+const getSingleImage = ({manga, chapter, volume, page}) => new Promise((resolve, reject) => {
+  getImages({manga, chapter, volume})
+    .then(links => {
+      resolve(links[page - 1])
     })
     .catch(err => reject(err))
 })
@@ -126,7 +128,7 @@ const progressiveBar = require('./progressiveBar')
 module.exports = {
   progressiveBar,
   searchManga,
-  getPageUrl,
+  getSingleImage,
   getImages,
   getFilename,
   getAllChapters,

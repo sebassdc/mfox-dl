@@ -15,7 +15,7 @@ const dinfo = chalk.green.italic.bold
 const { white } = chalk
 const {
   progressiveBar,
-  getPageUrl,
+  getSingleImage,
   getImages,
   getFilename,
   searchManga,
@@ -108,7 +108,7 @@ const downloadChapter = (manga, ch, volume, url = null) => {
       task: () => new Listr(images.map((url, page) => ({
         title: chalk.whiteBright(getFilename(page + 1)),
         task: () => dlPage(url, page + 1, getFilename(page + 1), chapterName),
-      })), {concurrent: true, exitOnError: true})
+      })), {concurrent: false, exitOnError: true})
     // },{
     //   title: chalk.whiteBright("Compress to webp"),
     //   task: () => new Listr(images.map((_, page) => ({
@@ -149,13 +149,18 @@ const multiDownload = ({manga, from, volume, to, links = null}) => {
     }).then(()=> log(gradient.rainbow("---Downloaded!---")))
 }
 
-const downloadPage = (manga, ch, page) => {
+const downloadPage = (volume, manga, ch, page) => {
   const chapterName = `${manga}-${pad(ch)}`
   let url
   const tasks = new Listr([
     {
       title: white('Get img url'),
-      task: () => getPageUrl(manga, ch, page).then(uri => {
+      task: () => getSingleImage({
+        manga,
+        chapter: ch,
+        page,
+        volume,
+      }).then(uri => {
         url = uri
       })
     },
