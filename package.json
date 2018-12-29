@@ -9,7 +9,7 @@
   "author": "Sebastian Hurtado",
   "license": "MIT",
   "dependencies": {
-    "@reactivex/rxjs": "^6.3.3",
+    "@reactivex/rxjs": "^5.5.2",
     "chalk": "^2.4.1",
     "commander": "^2.19.0",
     "del": "^3.0.0",
@@ -22,15 +22,10 @@
     "progress": "^2.0.3",
     "request-progress": "^3.0.0",
     "requestretry": "^3.1.0",
-    "rxjs": "^6.3.3",
+    "rxjs": "^5.5.2",
     "simple-rss": "^1.0.0",
     "webp-converter": "^2.1.6",
-    "yazl": "^2.5.1",
-    "qs": "6.6.0",
-    "hoek": "6.1.2",
-    "mime": "2.4.0",
-    "request": "2.88.0",
-    "hawk": "7.0.10"
+    "yazl": "^2.5.1"
   },
   "bin": {
     "mfox-dl": "bin/mfox-dl.js"
